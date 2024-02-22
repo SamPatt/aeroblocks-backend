@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from . import app, jwt  
-from .models import User
+from .models import User, CanvasState
 import mongoengine.errors
+from .lex import lex_code
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -50,3 +51,32 @@ def login():
         return jsonify(access_token=access_token), 200
     except Exception as e:
         return jsonify({"msg": "Login failed", "errors": str(e)}), 500
+
+@api_bp.route('/canvas/create', methods=['POST'])
+@jwt_required()
+def create_canvas():
+    current_user_email = get_jwt_identity()
+    user = User.objects(email=current_user_email).first()
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    data = request.get_json()
+    name = data.get('name')
+    code = data.get('code')
+    
+    initial_canvas_state = lex_code(code)
+
+    new_canvas = CanvasState(name=name, data=initial_canvas_state)
+    user.canvases.append(new_canvas)
+    user.save()
+
+
+    canvas_dict = {
+        "name": new_canvas.name,
+        "data": new_canvas.data,
+        "created_at": new_canvas.created_at.isoformat(),
+        "updated_at": new_canvas.updated_at.isoformat()
+    }
+
+    return jsonify({"message": "Canvas created successfully", "canvas": canvas_dict}), 201

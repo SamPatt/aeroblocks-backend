@@ -9,14 +9,14 @@ load_dotenv()
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}) # change this in production
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+jwt = JWTManager(app)
 
 database_uri = os.environ.get("DATABASE_URL")
 connect(host=database_uri)
 
-jwt = JWTManager(app)
 
 from .routes import api_bp 
 app.register_blueprint(api_bp)

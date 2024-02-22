@@ -1,10 +1,10 @@
-from mongoengine import Document, StringField, ListField, EmbeddedDocument, EmbeddedDocumentField, DateTimeField
+from mongoengine import Document, StringField, ListField, EmbeddedDocument, EmbeddedDocumentField, DateTimeField, DictField
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 class CanvasState(EmbeddedDocument):
     name = StringField(required=True)
-    data = StringField()  
+    data = DictField()  
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
     
