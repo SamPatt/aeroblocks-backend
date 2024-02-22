@@ -1,24 +1,19 @@
 from flask import Flask
 from dotenv import load_dotenv
-from flask_pymongo import PyMongo
+from mongoengine import connect
+from flask_jwt_extended import JWTManager
+from .models import User 
+
 import os
 
 load_dotenv()
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
 
-app.config['MONGO_URI'] = os.environ.get('DATABASE_URL')
+database_uri = os.environ.get("DATABASE_URL")
+connect(host=database_uri)
 
-mongo = PyMongo(app)
+jwt = JWTManager(app)
 
-
-@app.route('/')
-def hello_world():
-    return 'Hello, Aeroblocks!'
-
-@app.route('/test_db')
-def test_db():
-    try:
-        return 'Connected to the database successfully!'
-    except Exception as e:
-        return 'Failed to connect to the database: ' + str(e)
+from . import routes
