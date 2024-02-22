@@ -1,14 +1,16 @@
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from . import app, jwt  
 from .models import User
 import mongoengine.errors
 
+api_bp = Blueprint('api', __name__, url_prefix='/api')
+
 @app.route('/')
 def hello_world():
     return 'Hello, Aeroblocks!'
 
-@app.route('/register', methods=['POST'])
+@api_bp.route('/register', methods=['POST'])
 def register():
     try:
         email = request.json.get('email', None)
@@ -30,7 +32,7 @@ def register():
     except Exception as e:
         return jsonify({"msg": "Registration failed", "errors": str(e)}), 500
 
-@app.route('/login', methods=['POST'])
+@api_bp.route('/login', methods=['POST'])
 def login():
     try:
         email = request.json.get('email', None)
