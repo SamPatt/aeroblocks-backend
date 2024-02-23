@@ -80,3 +80,21 @@ def create_canvas():
     }
 
     return jsonify({"message": "Canvas created successfully", "canvas": canvas_dict}), 201
+
+@api_bp.route('/canvas/load', methods=['GET'])
+@jwt_required()
+def load_canvases():
+    current_user_email = get_jwt_identity()
+    user = User.objects(email=current_user_email).first()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    canvases = [{
+        "name": canvas.name,
+        "data": canvas.data,
+        "created_at": canvas.created_at.isoformat(),
+        "updated_at": canvas.updated_at.isoformat()
+    } for canvas in user.canvases]
+
+    return jsonify(canvases), 200
