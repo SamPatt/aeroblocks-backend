@@ -10,6 +10,7 @@ class CodeVisitor(ast.NodeVisitor):
             'type': 'FUNCTION',
             'id': node.name,
             'args': [arg.arg for arg in node.args.args],
+            'position': { "x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item)  
@@ -30,6 +31,7 @@ class CodeVisitor(ast.NodeVisitor):
             item = {
                 'type': 'VARIABLE',
                 'id': id,
+                'position': { "x": None, "y": None},
                 'valueType': value,
             }
             if self.context_stack:
@@ -42,6 +44,7 @@ class CodeVisitor(ast.NodeVisitor):
         item = {
             'type': 'CONDITIONAL',
             'test': ast.unparse(node.test),
+            'position': { "x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item) 
@@ -60,6 +63,7 @@ class CodeVisitor(ast.NodeVisitor):
             'loopType': 'for',
             'iterator': ast.unparse(node.target),
             'iterable': ast.unparse(node.iter),
+            'position': { "x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item)
@@ -76,6 +80,7 @@ class CodeVisitor(ast.NodeVisitor):
             'type': 'LOOP',
             'loopType': 'while',
             'test': ast.unparse(node.test),
+            'position': { "x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item)
