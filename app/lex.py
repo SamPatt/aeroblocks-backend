@@ -1,38 +1,43 @@
 import ast
+import uuid
 
 class CodeVisitor(ast.NodeVisitor):
     def __init__(self):
         self.items = []
         self.context_stack = []
 
+    def generate_id(self):
+        return str(uuid.uuid4())
+
     def visit_FunctionDef(self, node):
         item = {
             'type': 'FUNCTION',
-            'id': node.name,
+            'id': self.generate_id(),
+            'name': node.name,
             'args': [arg.arg for arg in node.args.args],
-            'position': { "x": None, "y": None},
+            'returns': self.infer_return_type(node),
+            'position': {"x": None, "y": None},
             'children': [],
         }
-        self.context_stack.append(item)  
-        self.generic_visit(node)  
-        self.context_stack.pop()  
-        
+        self.context_stack.append(item)
+        self.generic_visit(node)
+        self.context_stack.pop()
+
         if self.context_stack:
-            
             self.context_stack[-1]['children'].append(item)
         else:
-            
             self.items.append(item)
 
     def visit_Assign(self, node):
-        target_id = [t.id for t in node.targets if isinstance(t, ast.Name)]
-        value = self.infer_type(node.value)
-        for id in target_id:
+        targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        value_type = self.infer_type(node.value)
+        for target in targets:
             item = {
                 'type': 'VARIABLE',
-                'id': id,
-                'position': { "x": None, "y": None},
-                'valueType': value,
+                'id': self.generate_id(),
+                'name': target,
+                'position': {"x": None, "y": None},
+                'valueType': value_type,
             }
             if self.context_stack:
                 self.context_stack[-1]['children'].append(item)
@@ -43,27 +48,28 @@ class CodeVisitor(ast.NodeVisitor):
     def visit_If(self, node):
         item = {
             'type': 'CONDITIONAL',
-            'test': ast.unparse(node.test),
-            'position': { "x": None, "y": None},
+            'id': self.generate_id(),
+            'condition': ast.unparse(node.test),
+            'position': {"x": None, "y": None},
             'children': [],
         }
-        self.context_stack.append(item) 
+        self.context_stack.append(item)
         self.generic_visit(node)
-        self.context_stack.pop()  
-        
+        self.context_stack.pop()
+
         if self.context_stack:
             self.context_stack[-1]['children'].append(item)
         else:
             self.items.append(item)
 
     def visit_For(self, node):
-
         item = {
             'type': 'LOOP',
+            'id': self.generate_id(),
             'loopType': 'for',
             'iterator': ast.unparse(node.target),
             'iterable': ast.unparse(node.iter),
-            'position': { "x": None, "y": None},
+            'position': {"x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item)
@@ -74,26 +80,33 @@ class CodeVisitor(ast.NodeVisitor):
             self.context_stack[-1]['children'].append(item)
         else:
             self.items.append(item)
+
 
     def visit_While(self, node):
         item = {
             'type': 'LOOP',
+            'id': self.generate_id(),
             'loopType': 'while',
             'test': ast.unparse(node.test),
-            'position': { "x": None, "y": None},
+            'position': {"x": None, "y": None},
             'children': [],
         }
         self.context_stack.append(item)
         self.generic_visit(node)
         self.context_stack.pop()
-        
+
         if self.context_stack:
             self.context_stack[-1]['children'].append(item)
         else:
             self.items.append(item)
 
+    def infer_return_type(self, node):
+        for body_item in node.body:
+            if isinstance(body_item, ast.Return):
+                return self.infer_type(body_item.value)
+        return 'unknown'
+
     def infer_type(self, node):
-        """Infer the type of an AST node."""
         if isinstance(node, ast.Str):
             return 'str'
         elif isinstance(node, ast.Num):
