@@ -10,13 +10,16 @@ class CodeVisitor(ast.NodeVisitor):
         return str(uuid.uuid4())
 
     def visit_FunctionDef(self, node):
+        inputs = [{'id': self.generate_id(), 'name': arg.arg, 'type': self.infer_type(arg), 'connections': []} 
+                  for arg in node.args.args]
+        outputs = [{'id': self.generate_id(), 'name': 'return', 'type': self.infer_return_type(node), 'connections': []}]
         item = {
             'type': 'FUNCTION',
             'id': self.generate_id(),
             'name': node.name,
-            'args': [arg.arg for arg in node.args.args],
-            'returns': self.infer_return_type(node),
             'position': {"x": None, "y": None},
+            'inputs': inputs,
+            'outputs': outputs,
             'children': [],
         }
         self.context_stack.append(item)
@@ -38,6 +41,7 @@ class CodeVisitor(ast.NodeVisitor):
                 'name': target,
                 'position': {"x": None, "y": None},
                 'valueType': value_type,
+                'outputs': [{'id': self.generate_id(), 'name': target, 'type': value_type, 'connections': []}]
             }
             if self.context_stack:
                 self.context_stack[-1]['children'].append(item)
@@ -46,11 +50,13 @@ class CodeVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_If(self, node):
+        outputs = [{'id': self.generate_id(), 'name': 'output', 'type': 'conditional output', 'connections': []}]
         item = {
             'type': 'CONDITIONAL',
             'id': self.generate_id(),
             'condition': ast.unparse(node.test),
             'position': {"x": None, "y": None},
+            'outputs': outputs,
             'children': [],
         }
         self.context_stack.append(item)
@@ -63,6 +69,7 @@ class CodeVisitor(ast.NodeVisitor):
             self.items.append(item)
 
     def visit_For(self, node):
+        outputs = [{'id': self.generate_id(), 'name': 'body', 'type': 'loop body', 'connections': []}]
         item = {
             'type': 'LOOP',
             'id': self.generate_id(),
@@ -70,6 +77,7 @@ class CodeVisitor(ast.NodeVisitor):
             'iterator': ast.unparse(node.target),
             'iterable': ast.unparse(node.iter),
             'position': {"x": None, "y": None},
+            'outputs': outputs,
             'children': [],
         }
         self.context_stack.append(item)
@@ -81,14 +89,15 @@ class CodeVisitor(ast.NodeVisitor):
         else:
             self.items.append(item)
 
-
     def visit_While(self, node):
+        outputs = [{'id': self.generate_id(), 'name': 'body', 'type': 'loop body', 'connections': []}]
         item = {
             'type': 'LOOP',
             'id': self.generate_id(),
             'loopType': 'while',
             'test': ast.unparse(node.test),
             'position': {"x": None, "y": None},
+            'outputs': outputs,
             'children': [],
         }
         self.context_stack.append(item)
@@ -99,6 +108,7 @@ class CodeVisitor(ast.NodeVisitor):
             self.context_stack[-1]['children'].append(item)
         else:
             self.items.append(item)
+
 
     def infer_return_type(self, node):
         for body_item in node.body:
