@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from . import app, jwt  
 from .models import User, CanvasState
 import mongoengine.errors
+from datetime import timedelta
 from .lex import lex_code
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -47,7 +48,8 @@ def login():
         if user is None or not user.check_password(password):
             return jsonify({"msg": "Invalid email or password"}), 401
 
-        access_token = create_access_token(identity=email)
+        expires_delta = timedelta(hours=3)
+        access_token = create_access_token(identity=email, expires_delta=expires_delta)
         return jsonify(access_token=access_token), 200
     except Exception as e:
         return jsonify({"msg": "Login failed", "errors": str(e)}), 500
