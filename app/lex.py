@@ -26,7 +26,7 @@ class CodeVisitor(ast.NodeVisitor):
             'name': None,
             'valueType': 'unknown',
             'position': {"x": None, "y": None},
-            'value': None,
+            'value': '',
             'functionId': None,
         })
 
@@ -38,7 +38,7 @@ class CodeVisitor(ast.NodeVisitor):
             'position': {"x": None, "y": None},
             'connections': [],
             'functionId': None,
-            'value': None,
+            'value': '',
         })
 
     def visit_FunctionDef(self, node):
@@ -101,7 +101,7 @@ class CodeVisitor(ast.NodeVisitor):
                 'valueType': 'unknown',
                 'position': {"x": None, "y": None},
                 'functionId': func_id,  
-                'value': None  
+                'value': ''  
             }
             
             for default, param in zip(reversed(node.args.defaults), reversed(node.args.args)):
