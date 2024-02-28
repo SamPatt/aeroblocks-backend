@@ -9,6 +9,8 @@ class CodeVisitor(ast.NodeVisitor):
     def generate_id(self):
         return str(uuid.uuid4())
 
+    # Creates three blanks blocks to start the canvas
+
     def add_initial_blocks(self):
         self.items.append({
             'type': 'FUNCTION',
@@ -110,6 +112,35 @@ class CodeVisitor(ast.NodeVisitor):
                     break
             self.items.append(input_item)
 
+    def visit_Assign(self, node):
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                variable_item = {
+                    'type': 'VARIABLE',
+                    'id': self.generate_id(),
+                    'name': target.id,
+                    'valueType': 'unknown',
+                    'position': {"x": None, "y": None},
+                    'value': self.infer_literal_value(node.value),
+                }
+                self.items.append(variable_item)
+
+    def visit_Expr(self, node):
+        if isinstance(node.value, ast.Call) and hasattr(node.value.func, 'id') and node.value.func.id == 'print':
+            print_args = node.value.args
+            if print_args:
+                print_value = self.infer_literal_value(print_args[0])
+                if print_value is not None:
+                    self.items.append({
+                        'type': 'OUTPUT',
+                        'id': self.generate_id(),
+                        'name': 'print',
+                        'valueType': 'string',
+                        'position': {"x": None, "y": None},
+                        'value': print_value,
+                        'functionId': None,
+                    })
+    
     def infer_literal_value(self, value):
         
         if isinstance(value, (ast.Str, ast.Num)): 
@@ -126,10 +157,3 @@ def lex_code(code):
     visitor = CodeVisitor()
     visitor.visit(tree)
     return {'blocks': visitor.items}
-
-# hello_world_code = """
-# def hello():
-#     print('Hello world!')
-
-# """
-# print(lex_code(hello_world_code))
