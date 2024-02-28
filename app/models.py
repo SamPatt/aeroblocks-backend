@@ -7,10 +7,6 @@ class CanvasState(EmbeddedDocument):
     data = DictField()  
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
-    
-    def save(self, *args, **kwargs):
-        self.updated_at = datetime.now()
-        return super(CanvasState, self).save(*args, **kwargs)
 
 class User(Document):
     email = StringField(required=True, unique=True)

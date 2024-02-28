@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from . import app, jwt  
 from .models import User, CanvasState
 import mongoengine.errors
-from datetime import timedelta
+from datetime import timedelta, datetime
 from .lex import lex_code
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -100,3 +100,27 @@ def load_canvases():
     } for canvas in user.canvases]
 
     return jsonify(canvases), 200
+
+@api_bp.route('/canvas/save', methods=['POST'])
+@jwt_required()
+def save_canvas():
+    current_user_email = get_jwt_identity()
+    user = User.objects(email=current_user_email).first()
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    
+    data = request.get_json()
+    canvas_name = data.get('name') 
+    new_data = data.get('data')
+
+    for canvas in user.canvases:
+        if canvas.name == canvas_name:
+            canvas.data = new_data 
+            canvas.updated_at = datetime.now()  
+            break 
+    
+    user.save()
+
+    return jsonify({"message": "Canvas saved successfully"}), 200
