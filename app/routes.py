@@ -109,18 +109,22 @@ def save_canvas():
     
     if not user:
         return jsonify({"error": "User not found"}), 404
-    
-    
+
     data = request.get_json()
-    canvas_name = data.get('name') 
+    canvas_name = data.get('name')
     new_data = data.get('data')
 
+    canvas_found = False
     for canvas in user.canvases:
         if canvas.name == canvas_name:
-            canvas.data = new_data 
-            canvas.updated_at = datetime.now()  
-            break 
-    
-    user.save()
+            canvas.data = new_data
+            canvas.updated_at = datetime.now()
+            canvas_found = True
+            break
 
+    if not canvas_found:
+        new_canvas = CanvasState(name=canvas_name, data=new_data, updated_at=datetime.now())
+        user.canvases.append(new_canvas)
+
+    user.save()
     return jsonify({"message": "Canvas saved successfully"}), 200
